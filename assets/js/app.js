@@ -1,3 +1,10 @@
+// app.js
+import { initImageUpload } from "./image-handler.js";
+import { initPoints, renderPointsLayer } from "./points-manager.js";
+import { saveHistory, undo, redo } from "./history-manager.js";
+import { saveToLocalStorage, saveSettings, loadFromLocalStorage } from "./state-manager.js";
+import { initUIControls } from "./ui-controller.js";
+
 const upload = document.getElementById("upload");
 const mainImage = document.getElementById("mainImage");
 const pointsContainer = document.getElementById("points");
@@ -10,156 +17,67 @@ const toggleNumbers = document.getElementById("toggleNumbers");
 const pointSizeInput = document.getElementById("pointSize");
 const pointOpacityInput = document.getElementById("pointOpacity");
 
-let showNumbers = toggleNumbers.checked;
-let pointSize = parseInt(pointSizeInput.value);
-let pointOpacity = parseInt(pointOpacityInput.value) / 100;
-
 let points = [];
 let history = [];
 let historyIndex = -1;
 
-// === Обработчики чекбокса и ползунков ===
-toggleNumbers.addEventListener("change", () => {
-  showNumbers = toggleNumbers.checked;
-  saveSettings();
-  renderPoints();
+// Инициализация UI
+let { showNumbers, pointSize, pointOpacity } = initUIControls(toggleNumbers, pointSizeInput, pointOpacityInput, () => {
+  renderPointsLayer(pointsContainer, points, mainImage, pointSize, pointOpacity, showNumbers, updateCounter);
+}, saveSettings);
+
+// Загрузка из localStorage
+({ showNumbers, pointSize, pointOpacity } = loadFromLocalStorage(mainImage, points, toggleNumbers, pointSizeInput, pointOpacityInput, () => {
+  renderPointsLayer(pointsContainer, points, mainImage, pointSize, pointOpacity, showNumbers, updateCounter);
+}));
+
+// Инициализация загрузки изображения
+initImageUpload(upload, mainImage, points, history, historyIndex, () => {
+  renderPointsLayer(pointsContainer, points, mainImage, pointSize, pointOpacity, showNumbers, updateCounter);
+}, saveToLocalStorage);
+
+// Инициализация точек
+initPoints(mainImage, points, () => {
+  historyIndex = saveHistory(points, history, historyIndex, saveToLocalStorage);
+}, () => {
+  renderPointsLayer(pointsContainer, points, mainImage, pointSize, pointOpacity, showNumbers, updateCounter);
 });
 
-pointSizeInput.addEventListener("input", () => {
-  pointSize = parseInt(pointSizeInput.value);
-  saveSettings();
-  renderPoints();
+// Undo/Redo
+undoBtn.addEventListener("click", () => {
+  historyIndex = undo(points, history, historyIndex, () => {
+    renderPointsLayer(pointsContainer, points, mainImage, pointSize, pointOpacity, showNumbers, updateCounter);
+  }, saveToLocalStorage);
 });
 
-pointOpacityInput.addEventListener("input", () => {
-  pointOpacity = parseInt(pointOpacityInput.value) / 100;
-  saveSettings();
-  renderPoints();
+redoBtn.addEventListener("click", () => {
+  historyIndex = redo(points, history, historyIndex, () => {
+    renderPointsLayer(pointsContainer, points, mainImage, pointSize, pointOpacity, showNumbers, updateCounter);
+  }, saveToLocalStorage);
 });
 
-// === Утилиты ===
+// Сброс
+resetBtn.addEventListener("click", () => {
+  localStorage.clear();
+  points = [];
+  history = [];
+  historyIndex = -1;
+  mainImage.src = "";
+  pointsContainer.innerHTML = "";
+  showNumbers = true;
+  toggleNumbers.checked = true;
+  pointSize = 20;
+  pointOpacity = 1;
+  pointSizeInput.value = pointSize;
+  pointOpacityInput.value = 100;
+  updateCounter();
+});
+
 function updateCounter() {
   counter.textContent = `Точек: ${points.length}`;
 }
 
-function renderPoints() {
-  pointsContainer.innerHTML = "";
-  const rect = mainImage.getBoundingClientRect();
-  points.forEach((p) => {
-    const pointEl = document.createElement("div");
-    pointEl.className = "point";
-
-    const x = p.relX * rect.width;
-    const y = p.relY * rect.height;
-
-    pointEl.style.left = `${x}px`;
-    pointEl.style.top = `${y}px`;
-    pointEl.style.width = `${pointSize}px`;
-    pointEl.style.height = `${pointSize}px`;
-    pointEl.style.opacity = pointOpacity;
-    pointEl.textContent = showNumbers ? p.id : "";
-    pointsContainer.appendChild(pointEl);
-  });
-  updateCounter();
-}
-
-function saveHistory() {
-  history = history.slice(0, historyIndex + 1);
-  history.push(JSON.stringify(points));
-  historyIndex++;
-  saveToLocalStorage();
-}
-
-function saveToLocalStorage() {
-  if (mainImage.src.startsWith("data:image")) {
-    localStorage.setItem("imageSrc", mainImage.src);
-  }
-  localStorage.setItem("points", JSON.stringify(points));
-}
-
-function saveSettings() {
-  localStorage.setItem("showNumbers", showNumbers);
-  localStorage.setItem("pointSize", pointSize);
-  localStorage.setItem("pointOpacity", pointOpacity);
-}
-
-function loadFromLocalStorage() {
-  const savedImage = localStorage.getItem("imageSrc");
-  const savedPoints = localStorage.getItem("points");
-  const savedShowNumbers = localStorage.getItem("showNumbers");
-  const savedPointSize = localStorage.getItem("pointSize");
-  const savedPointOpacity = localStorage.getItem("pointOpacity");
-
-  if (savedImage) mainImage.src = savedImage;
-  if (savedPoints) points = JSON.parse(savedPoints);
-  if (savedShowNumbers !== null) {
-    showNumbers = savedShowNumbers === "true";
-    toggleNumbers.checked = showNumbers;
-  }
-  if (savedPointSize) {
-    pointSize = parseInt(savedPointSize);
-    pointSizeInput.value = pointSize;
-  }
-  if (savedPointOpacity) {
-    pointOpacity = parseFloat(savedPointOpacity);
-    pointOpacityInput.value = Math.round(pointOpacity * 100);
-  }
-
-  renderPoints();
-}
-
-// === 1. Загрузка изображения ===
-upload.addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = function (event) {
-    mainImage.src = event.target.result;
-    points = [];
-    history = [];
-    historyIndex = -1;
-    renderPoints();
-    saveToLocalStorage();
-  };
-  reader.readAsDataURL(file);
-});
-
-// === 2. Установка точек ===
-mainImage.addEventListener("click", (e) => {
-  if (!mainImage.src) return;
-
-  const rect = mainImage.getBoundingClientRect();
-  const relX = (e.clientX - rect.left) / rect.width;
-  const relY = (e.clientY - rect.top) / rect.height;
-
-  const id = points.length + 1;
-  points.push({ id, relX, relY });
-
-  saveHistory();
-  renderPoints();
-});
-
-// === 3. Undo/Redo ===
-undoBtn.addEventListener("click", () => {
-  if (historyIndex > 0) {
-    historyIndex--;
-    points = JSON.parse(history[historyIndex]);
-    renderPoints();
-    saveToLocalStorage();
-  }
-});
-
-redoBtn.addEventListener("click", () => {
-  if (historyIndex < history.length - 1) {
-    historyIndex++;
-    points = JSON.parse(history[historyIndex]);
-    renderPoints();
-    saveToLocalStorage();
-  }
-});
-
-// === 4. Сохранение в PNG ===
+// Сохранение в PNG остался без изменений
 saveBtn.addEventListener("click", () => {
   if (!mainImage.src) return;
 
@@ -207,23 +125,3 @@ saveBtn.addEventListener("click", () => {
   link.href = canvas.toDataURL("image/png");
   link.click();
 });
-
-// === 5. Сброс ===
-resetBtn.addEventListener("click", () => {
-  localStorage.clear();
-  points = [];
-  history = [];
-  historyIndex = -1;
-  mainImage.src = "";
-  pointsContainer.innerHTML = "";
-  showNumbers = true;
-  toggleNumbers.checked = true;
-  pointSize = 20;
-  pointOpacity = 1;
-  pointSizeInput.value = pointSize;
-  pointOpacityInput.value = 100;
-  updateCounter();
-});
-
-// === При загрузке страницы восстанавливаем ===
-window.addEventListener("load", loadFromLocalStorage);
