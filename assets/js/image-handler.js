@@ -1,4 +1,4 @@
- // image-handler.js
+// image-handler.js
 export function initImageUpload(upload, mainImage, points, history, historyIndex, renderPoints, saveToLocalStorage) {
   upload.addEventListener("change", (e) => {
     const file = e.target.files[0];

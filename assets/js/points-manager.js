@@ -1,4 +1,4 @@
- // points-manager.js
+// points-manager.js
 export function initPoints(mainImage, points, saveHistory, renderPoints) {
   mainImage.addEventListener("click", (e) => {
     if (!mainImage.src) return;

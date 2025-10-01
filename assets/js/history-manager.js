@@ -1,4 +1,4 @@
- // history-manager.js
+// history-manager.js
 export function saveHistory(points, history, historyIndex, saveToLocalStorage) {
   history = history.slice(0, historyIndex + 1);
   history.push(JSON.stringify(points));
