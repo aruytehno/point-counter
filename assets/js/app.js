@@ -5,6 +5,7 @@ const counter = document.getElementById("counter");
 const saveBtn = document.getElementById("saveBtn");
 const undoBtn = document.getElementById("undoBtn");
 const redoBtn = document.getElementById("redoBtn");
+const resetBtn = document.getElementById("resetBtn");
 
 let points = [];
 let history = [];
@@ -35,9 +36,28 @@ function renderPoints() {
 }
 
 function saveHistory() {
-  history = history.slice(0, historyIndex + 1); // отрезаем "будущее"
+  history = history.slice(0, historyIndex + 1);
   history.push(JSON.stringify(points));
   historyIndex++;
+  saveToLocalStorage();
+}
+
+function saveToLocalStorage() {
+  localStorage.setItem("points", JSON.stringify(points));
+  localStorage.setItem("imageSrc", mainImage.src || "");
+}
+
+function loadFromLocalStorage() {
+  const savedImage = localStorage.getItem("imageSrc");
+  const savedPoints = localStorage.getItem("points");
+
+  if (savedImage) {
+    mainImage.src = savedImage;
+  }
+  if (savedPoints) {
+    points = JSON.parse(savedPoints);
+  }
+  renderPoints();
 }
 
 // === 1. Загрузка изображения ===
@@ -52,6 +72,7 @@ upload.addEventListener("change", (e) => {
     history = [];
     historyIndex = -1;
     renderPoints();
+    saveToLocalStorage();
   };
   reader.readAsDataURL(file);
 });
@@ -77,6 +98,7 @@ undoBtn.addEventListener("click", () => {
     historyIndex--;
     points = JSON.parse(history[historyIndex]);
     renderPoints();
+    saveToLocalStorage();
   }
 });
 
@@ -85,6 +107,7 @@ redoBtn.addEventListener("click", () => {
     historyIndex++;
     points = JSON.parse(history[historyIndex]);
     renderPoints();
+    saveToLocalStorage();
   }
 });
 
@@ -118,7 +141,7 @@ saveBtn.addEventListener("click", () => {
     ctx.fillText(p.id, x, y);
   });
 
-  // === Итоговое количество точек в правом верхнем углу ===
+  // итоговое количество
   const total = points.length;
   if (total > 0) {
     ctx.font = "bold 48px sans-serif";
@@ -141,3 +164,16 @@ saveBtn.addEventListener("click", () => {
   link.click();
 });
 
+// === 5. Сброс ===
+resetBtn.addEventListener("click", () => {
+  localStorage.clear();
+  points = [];
+  history = [];
+  historyIndex = -1;
+  mainImage.src = "";
+  pointsContainer.innerHTML = "";
+  updateCounter();
+});
+
+// === При загрузке страницы восстанавливаем ===
+window.addEventListener("load", loadFromLocalStorage);
