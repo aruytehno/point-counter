@@ -39,13 +39,25 @@ function handleImageUpload(e) {
 }
 
 // 2. Обработка кликов для точек
-pointsLayer.addEventListener('click', handleAddPoint);
+// Вешаем обработчик на контейнер изображения, а не на слой точек
+imageContainer.addEventListener('click', handleAddPoint);
 
 function handleAddPoint(e) {
-  if (!state.imageUrl) return; // Если изображения нет, выходим
+  // Проверяем, что кликнули именно по области изображения, а не по точкам
+  if (e.target.classList.contains('point')) {
+    return; // Если кликнули по существующей точке - выходим
+  }
+
+  if (!state.imageUrl || !mainImage.classList.contains('loaded')) return;
 
   // Получаем размеры и позицию изображения на странице
   const rect = mainImage.getBoundingClientRect();
+
+  // Проверяем, что клик был внутри изображения
+  if (e.clientX < rect.left || e.clientX > rect.right ||
+      e.clientY < rect.top || e.clientY > rect.bottom) {
+    return;
+  }
 
   // Вычисляем координаты клика ОТНОСИТЕЛЬНО ИЗОБРАЖЕНИЯ (в долях)
   const x = (e.clientX - rect.left) / rect.width;
@@ -73,6 +85,7 @@ function renderPoints() {
     const pointElement = document.createElement('div');
     pointElement.className = 'point';
     pointElement.textContent = index + 1; // Нумерация с 1
+    pointElement.dataset.id = point.id; // Сохраняем ID для будущего использования
 
     // Позиционируем точку в процентах относительно image-container
     pointElement.style.left = `${point.x * 100}%`;
