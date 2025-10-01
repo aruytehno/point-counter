@@ -13,16 +13,27 @@ export function initZoomAndPan(containerId) {
     wrapper.style.transform = `translate(${originX}px, ${originY}px) scale(${scale})`;
   }
 
-  // Зум колесом мыши
+  // Зум колесом мыши с учетом позиции курсора
   container.addEventListener("wheel", (e) => {
     e.preventDefault();
-    const delta = e.deltaY > 0 ? 0.9 : 1.1; // шаг
-    scale *= delta;
+
+    const rect = container.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    const newScale = scale * delta;
 
     // Ограничим масштаб
-    if (scale < 0.1) scale = 0.1;
-    if (scale > 10) scale = 10;
+    if (newScale < 0.1) return;
+    if (newScale > 10) return;
 
+    // Вычисляем смещение для масштабирования к курсору
+    const scaleFactor = newScale / scale;
+    originX = mouseX - (mouseX - originX) * scaleFactor;
+    originY = mouseY - (mouseY - originY) * scaleFactor;
+
+    scale = newScale;
     applyTransform();
   });
 
@@ -31,6 +42,7 @@ export function initZoomAndPan(containerId) {
     isDragging = true;
     startX = e.clientX - originX;
     startY = e.clientY - originY;
+    container.style.cursor = 'grabbing';
   });
 
   container.addEventListener("mousemove", (e) => {
@@ -42,9 +54,15 @@ export function initZoomAndPan(containerId) {
 
   container.addEventListener("mouseup", () => {
     isDragging = false;
+    container.style.cursor = 'grab';
   });
 
   container.addEventListener("mouseleave", () => {
     isDragging = false;
+    container.style.cursor = 'grab';
   });
+
+  // Инициализация курсора
+  container.style.cursor = 'grab';
+  applyTransform();
 }
