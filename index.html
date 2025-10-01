@@ -3,120 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Point Counter - Подсчет объектов</title>
+    <title>Point Counter - Подсчет объектов на изображении</title>
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
 
+    <!-- html2canvas для сохранения изображения -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+    <!-- Наши стили -->
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
     <div class="container-fluid h-100">
         <div class="row h-100">
-            <!-- Левая панель управления -->
-            <div class="col-md-3 col-lg-2 bg-light p-3 border-end" id="control-panel">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0">Настройки</h5>
-                    <button class="btn btn-sm btn-outline-secondary" id="toggle-panel">
-                        <i class="bi bi-chevron-left"></i>
-                    </button>
-                </div>
-
-                <!-- Настройки точек -->
-                <div class="mb-4">
-                    <h6>Внешний вид точек</h6>
-
-                    <div class="mb-3">
-                        <label class="form-label">Цвет точек</label>
-                        <input type="color" class="form-control form-control-color" id="point-color" value="#ff0000">
+            <!-- Панель инструментов -->
+            <div class="col-12 bg-light border-bottom p-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex gap-2">
+                        <button id="load-btn" class="btn btn-primary btn-sm">
+                            📁 Загрузить изображение
+                        </button>
+                        <button id="save-btn" class="btn btn-success btn-sm">
+                            💾 Сохранить результат
+                        </button>
+                        <button id="reset-btn" class="btn btn-danger btn-sm">
+                            🗑️ Сбросить
+                        </button>
                     </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Размер точек: <span id="size-value">5</span>px</label>
-                        <input type="range" class="form-range" id="point-size" min="2" max="20" value="5">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Прозрачность точек: <span id="opacity-value">80</span>%</label>
-                        <input type="range" class="form-range" id="point-opacity" min="10" max="100" value="80">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Прозрачность контура: <span id="border-opacity-value">100</span>%</label>
-                        <input type="range" class="form-range" id="point-border-opacity" min="0" max="100" value="100">
-                    </div>
-
-                    <div class="form-check form-switch mb-3">
-                        <input class="form-check-input" type="checkbox" id="show-numbers" checked>
-                        <label class="form-check-label" for="show-numbers">Показывать номера</label>
+                    <div id="counter" class="fw-bold fs-5">
+                        Точек: 0
                     </div>
                 </div>
 
-                <!-- Управление изображением -->
-                <div class="mb-4">
-                    <h6>Управление изображением</h6>
-
-                    <div class="mb-3">
-                        <input type="file" class="form-control" id="image-upload" accept="image/*">
-                        <div class="form-text" id="image-info">Изображение не загружено</div>
-                    </div>
-
-                    <div class="btn-group w-100 mb-2" role="group">
-                        <button class="btn btn-outline-primary" id="save-image">
-                            <i class="bi bi-download"></i> Сохранить
-                        </button>
-                        <button class="btn btn-outline-danger" id="reset-all">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
-
-                    <div class="btn-group w-100" role="group">
-                        <button class="btn btn-outline-secondary" id="undo-btn">
-                            <i class="bi bi-arrow-left"></i>
-                        </button>
-                        <button class="btn btn-outline-secondary" id="redo-btn">
-                            <i class="bi bi-arrow-right"></i>
-                        </button>
-                    </div>
-                </div>
+                <!-- Скрытый input для загрузки файлов -->
+                <input type="file" id="file-input" accept="image/*" style="display: none;">
             </div>
 
             <!-- Основная область с изображением -->
-            <div class="col-md-9 col-lg-10 position-relative" id="main-area">
-                <!-- Счетчик в правом верхнем углу -->
-                <div class="position-absolute top-0 end-0 m-3">
-                    <div class="bg-dark text-white rounded-pill px-3 py-2 shadow">
-                        <span id="points-counter">0</span> точек
-                    </div>
+            <div class="col-12 position-relative flex-grow-1 p-0">
+                <div id="image-container" class="image-container">
+                    <img id="main-image" src="" alt="Ваше изображение" class="main-image">
+                    <div id="points-layer" class="points-layer"></div>
                 </div>
 
-                <!-- Контейнер для изображения и точек -->
-                <div class="position-relative h-100 w-100 overflow-hidden" id="image-container">
-                    <div id="no-image-placeholder" class="h-100 d-flex flex-column justify-content-center align-items-center text-muted">
-                        <i class="bi bi-image display-1 mb-3"></i>
-                        <p>Загрузите изображение для начала работы</p>
-                        <button class="btn btn-primary" onclick="document.getElementById('image-upload').click()">
-                            <i class="bi bi-upload"></i> Загрузить изображение
+                <!-- Сообщение при отсутствии изображения -->
+                <div id="welcome-message" class="welcome-message">
+                    <div class="text-center">
+                        <h3>Point Counter</h3>
+                        <p>Загрузите изображение для начала подсчета объектов</p>
+                        <button id="welcome-load-btn" class="btn btn-primary">
+                            📁 Выбрать изображение
                         </button>
                     </div>
-                    <img id="main-image" class="position-absolute" style="display: none;">
-                    <div id="points-layer" class="position-absolute top-0 start-0"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Модули приложения -->
-    <script src="assets/js/state-manager.js"></script>
-    <script src="assets/js/image-handler.js"></script>
-    <script src="assets/js/points-manager.js"></script>
-    <script src="assets/js/history-manager.js"></script>
-    <script src="assets/js/ui-controller.js"></script>
+    <!-- Наш JavaScript -->
     <script src="assets/js/app.js"></script>
 </body>
 </html>

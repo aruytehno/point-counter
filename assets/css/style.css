@@ -1,128 +1,105 @@
-/* assets/css/style.css */
+/* Основные стили */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
 
-/* Основные стили контейнера */
-#image-container {
+.container-fluid {
+    padding: 0;
+}
+
+/* Контейнер для изображения */
+.image-container {
+    position: relative;
+    width: 100%;
+    height: calc(100vh - 60px);
     background-color: #f8f9fa;
-    cursor: crosshair;
-    user-select: none;
-    -webkit-user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
 }
 
-#main-image {
-    max-width: none;
-    max-height: none;
-    transform-origin: 0 0;
-    transition: transform 0.1s ease;
+/* Основное изображение */
+.main-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: none; /* Скрыто по умолчанию */
 }
 
-/* Стили точек */
+.main-image.loaded {
+    display: block; /* Показываем когда загружено */
+}
+
+/* Слой для точек */
+.points-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+/* Стили для точек */
 .point {
     position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #ff4444;
+    border: 2px solid #ffffff;
     border-radius: 50%;
-    border: 2px solid;
-    background-color: rgba(255, 0, 0, 0.8);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transform: translate(-50%, -50%);
+    pointer-events: auto;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     cursor: pointer;
     transition: all 0.2s ease;
-    z-index: 10;
 }
 
 .point:hover {
-    transform: translate(-50%, -50%) scale(1.2);
-    z-index: 20;
+    transform: translate(-50%, -50%) scale(1.1);
+    z-index: 1000;
 }
 
-.point.dragging {
-    cursor: grabbing;
-    z-index: 30;
-    filter: brightness(1.2);
-}
-
-/* Номера точек */
-.point-number {
+/* Приветственное сообщение */
+.welcome-message {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-size: 12px;
-    font-weight: bold;
-    pointer-events: none;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-}
-
-/* Крестик для удаления */
-.point-delete {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    width: 20px;
-    height: 20px;
-    background: #dc3545;
-    border-radius: 50%;
-    border: 2px solid white;
-    color: white;
-    display: none;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
-    font-weight: bold;
-    cursor: pointer;
-    z-index: 40;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    background-color: #f8f9fa;
+    z-index: 10;
 }
 
-.point.active .point-delete {
-    display: flex;
-}
-
-.point-delete:hover {
-    background: #c82333;
-    transform: scale(1.1);
-}
-
-/* Плейсхолдер для отсутствующего изображения */
-#no-image-placeholder {
-    background: linear-gradient(45deg, #f8f9fa 25%, transparent 25%),
-                linear-gradient(-45deg, #f8f9fa 25%, transparent 25%),
-                linear-gradient(45deg, transparent 75%, #f8f9fa 75%),
-                linear-gradient(-45deg, transparent 75%, #f8f9fa 75%);
-    background-size: 20px 20px;
-    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-}
-
-/* Свернутая панель */
-#control-panel.collapsed {
-    width: 50px;
-    min-width: 50px;
-    flex: 0 0 50px;
-}
-
-#control-panel.collapsed .panel-content {
+.welcome-message.hidden {
     display: none;
 }
 
-#control-panel.collapsed #toggle-panel .bi-chevron-left {
-    transform: rotate(180deg);
-}
+/* Адаптивность */
+@media (max-width: 768px) {
+    .point {
+        width: 25px;
+        height: 25px;
+        font-size: 10px;
+    }
 
-/* Счетчик точек */
-#points-counter {
-    font-weight: bold;
-    font-size: 1.1em;
-}
-
-/* Информация об изображении */
-#image-info {
-    font-size: 0.8em;
-    margin-top: 0.25rem;
-}
-
-/* Состояния кнопок */
-#undo-btn:disabled,
-#redo-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+    #counter {
+        font-size: 1rem !important;
+    }
 }
 
 /* Анимации */
@@ -137,80 +114,20 @@
     }
 }
 
-.point.new {
+.point {
     animation: pointAppear 0.3s ease-out;
 }
 
-@keyframes pointDisappear {
-    to {
-        transform: translate(-50%, -50%) scale(0);
-        opacity: 0;
-    }
+/* Стили для кнопок */
+.btn {
+    transition: all 0.2s ease;
 }
 
-.point.removing {
-    animation: pointDisappear 0.2s ease-in;
+.btn:hover {
+    transform: translateY(-1px);
 }
 
-/* Адаптивность */
-@media (max-width: 768px) {
-    #control-panel {
-        position: fixed;
-        top: 0;
-        left: 0;
-        height: 100vh;
-        z-index: 1000;
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
-    }
-
-    #control-panel.show {
-        transform: translateX(0);
-    }
-
-    #toggle-panel {
-        position: absolute;
-        top: 10px;
-        right: -40px;
-    }
-
-    #points-counter {
-        font-size: 1em;
-        padding: 0.25rem 0.75rem;
-    }
-}
-
-/* Кастомные стили для ползунков */
-.form-range::-webkit-slider-thumb {
-    background: #007bff;
-}
-
-.form-range::-moz-range-thumb {
-    background: #007bff;
-}
-
-/* Стили для перетаскивания изображения */
-#image-container.grabbing {
-    cursor: grabbing;
-}
-
-#image-container.grabbing #main-image {
-    transition: none;
-}
-
-/* Вспомогательные классы */
-.cursor-crosshair {
-    cursor: crosshair !important;
-}
-
-.cursor-grab {
-    cursor: grab !important;
-}
-
-.cursor-grabbing {
-    cursor: grabbing !important;
-}
-
-.text-shadow {
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+/* Кастомные цвета */
+.bg-light {
+    background-color: #f8f9fa !important;
 }
