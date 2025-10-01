@@ -7,16 +7,33 @@ const undoBtn = document.getElementById("undoBtn");
 const redoBtn = document.getElementById("redoBtn");
 const resetBtn = document.getElementById("resetBtn");
 const toggleNumbers = document.getElementById("toggleNumbers");
-let showNumbers = true;
+const pointSizeInput = document.getElementById("pointSize");
+const pointOpacityInput = document.getElementById("pointOpacity");
+
+let showNumbers = toggleNumbers.checked;
+let pointSize = parseInt(pointSizeInput.value);
+let pointOpacity = parseInt(pointOpacityInput.value) / 100;
 
 let points = [];
 let history = [];
 let historyIndex = -1;
 
-
-
+// === Обработчики чекбокса и ползунков ===
 toggleNumbers.addEventListener("change", () => {
   showNumbers = toggleNumbers.checked;
+  saveSettings();
+  renderPoints();
+});
+
+pointSizeInput.addEventListener("input", () => {
+  pointSize = parseInt(pointSizeInput.value);
+  saveSettings();
+  renderPoints();
+});
+
+pointOpacityInput.addEventListener("input", () => {
+  pointOpacity = parseInt(pointOpacityInput.value) / 100;
+  saveSettings();
   renderPoints();
 });
 
@@ -32,13 +49,15 @@ function renderPoints() {
     const pointEl = document.createElement("div");
     pointEl.className = "point";
 
-    // преобразуем относительные координаты в экранные
     const x = p.relX * rect.width;
     const y = p.relY * rect.height;
 
     pointEl.style.left = `${x}px`;
     pointEl.style.top = `${y}px`;
-    pointEl.textContent = showNumbers ? p.id : ""; // показываем или скрываем цифру
+    pointEl.style.width = `${pointSize}px`;
+    pointEl.style.height = `${pointSize}px`;
+    pointEl.style.opacity = pointOpacity;
+    pointEl.textContent = showNumbers ? p.id : "";
     pointsContainer.appendChild(pointEl);
   });
   updateCounter();
@@ -52,26 +71,42 @@ function saveHistory() {
 }
 
 function saveToLocalStorage() {
-  // сохраняем только base64, а не blob:
   if (mainImage.src.startsWith("data:image")) {
     localStorage.setItem("imageSrc", mainImage.src);
   }
   localStorage.setItem("points", JSON.stringify(points));
 }
 
+function saveSettings() {
+  localStorage.setItem("showNumbers", showNumbers);
+  localStorage.setItem("pointSize", pointSize);
+  localStorage.setItem("pointOpacity", pointOpacity);
+}
+
 function loadFromLocalStorage() {
   const savedImage = localStorage.getItem("imageSrc");
   const savedPoints = localStorage.getItem("points");
+  const savedShowNumbers = localStorage.getItem("showNumbers");
+  const savedPointSize = localStorage.getItem("pointSize");
+  const savedPointOpacity = localStorage.getItem("pointOpacity");
 
-  if (savedImage) {
-    mainImage.src = savedImage; // base64 восстановится без проблем на GitHub Pages
+  if (savedImage) mainImage.src = savedImage;
+  if (savedPoints) points = JSON.parse(savedPoints);
+  if (savedShowNumbers !== null) {
+    showNumbers = savedShowNumbers === "true";
+    toggleNumbers.checked = showNumbers;
   }
-  if (savedPoints) {
-    points = JSON.parse(savedPoints);
+  if (savedPointSize) {
+    pointSize = parseInt(savedPointSize);
+    pointSizeInput.value = pointSize;
   }
+  if (savedPointOpacity) {
+    pointOpacity = parseFloat(savedPointOpacity);
+    pointOpacityInput.value = Math.round(pointOpacity * 100);
+  }
+
   renderPoints();
 }
-
 
 // === 1. Загрузка изображения ===
 upload.addEventListener("change", (e) => {
@@ -133,44 +168,40 @@ saveBtn.addEventListener("click", () => {
   canvas.height = mainImage.naturalHeight;
   const ctx = canvas.getContext("2d");
 
-  // Рисуем картинку
   ctx.drawImage(mainImage, 0, 0);
 
-  // Настройки текста для точек
-  ctx.font = "20px sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-
-  // Рисуем точки
   points.forEach((p) => {
     const x = p.relX * mainImage.naturalWidth;
     const y = p.relY * mainImage.naturalHeight;
+    const scale = mainImage.naturalWidth / mainImage.width;
+    const radius = (pointSize / 2) * scale;
 
     ctx.beginPath();
-    ctx.arc(x, y, 10, 0, Math.PI * 2);
-    ctx.fillStyle = "red";
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,0,0,${pointOpacity})`;
     ctx.fill();
-    ctx.fillStyle = "white";
-    ctx.fillText(p.id, x, y);
+
+    if (showNumbers) {
+      ctx.fillStyle = "white";
+      ctx.font = `${radius}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(p.id, x, y);
+    }
   });
 
-  // итоговое количество
   const total = points.length;
   if (total > 0) {
     ctx.font = "bold 48px sans-serif";
     ctx.textAlign = "right";
     ctx.textBaseline = "top";
-
-    // обводка для читаемости
     ctx.strokeStyle = "black";
     ctx.lineWidth = 6;
     ctx.strokeText(`Итого: ${total}`, canvas.width - 20, 20);
-
     ctx.fillStyle = "white";
     ctx.fillText(`Итого: ${total}`, canvas.width - 20, 20);
   }
 
-  // === Скачивание с числом в названии ===
   const link = document.createElement("a");
   link.download = `result_${total}.png`;
   link.href = canvas.toDataURL("image/png");
@@ -185,6 +216,12 @@ resetBtn.addEventListener("click", () => {
   historyIndex = -1;
   mainImage.src = "";
   pointsContainer.innerHTML = "";
+  showNumbers = true;
+  toggleNumbers.checked = true;
+  pointSize = 20;
+  pointOpacity = 1;
+  pointSizeInput.value = pointSize;
+  pointOpacityInput.value = 100;
   updateCounter();
 });
 
