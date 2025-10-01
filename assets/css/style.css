@@ -1,8 +1,10 @@
+/* assets\css\style.css */
 /* Общий сброс */
 body {
   font-family: sans-serif;
   margin: 0;
   padding: 0;
+  overflow: hidden; /* чтобы при панорамировании не появлялись скроллы */
 }
 
 /* Верхняя панель */
@@ -18,14 +20,33 @@ body {
 /* Контейнер с изображением */
 #image-container {
   position: relative;
-  display: inline-block;
   margin: 10px;
+  width: calc(100% - 20px);
+  height: calc(100vh - 70px); /* вся область кроме топ-бара */
+  overflow: hidden; /* обрезаем лишнее при зуме/панорамировании */
+  cursor: grab;
 }
 
+#image-container:active {
+  cursor: grabbing;
+}
+
+/* Враппер для трансформаций */
+#zoom-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0; /* важно для правильного зума */
+  will-change: transform; /* оптимизация для трансформаций */
+}
+
+/* Картинка */
 #mainImage {
   max-width: 100%;
   height: auto;
   display: block;
+  user-select: none;
+  pointer-events: none; /* чтобы клик попадал на контейнер, а не блокировался картинкой */
 }
 
 /* Слой для точек */
@@ -33,6 +54,9 @@ body {
   position: absolute;
   top: 0;
   left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* точки не должны перехватывать клики */
 }
 
 /* Сама точка */
@@ -50,4 +74,6 @@ body {
   justify-content: center;
   cursor: pointer;
   transform: translate(-50%, -50%); /* центрирование */
+  pointer-events: auto; /* но сами точки должны быть кликабельны */
+  z-index: 10;
 }

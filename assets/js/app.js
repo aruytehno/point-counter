@@ -4,6 +4,7 @@ import { initPoints, renderPoints } from "./points-manager.js";
 import { initHistory, undo, redo, saveHistory } from "./history-manager.js";
 import { saveToLocalStorage, saveSettings, loadFromLocalStorage } from "./state-manager.js";
 import { initUIControls } from "./ui-controller.js";
+import { initZoomAndPan } from "./zoom-handler.js"; // 👈 добавлен импорт
 
 // Глобальные переменные состояния
 let state = {
@@ -221,6 +222,9 @@ function initApp() {
 
   // Назначение обработчиков кнопок
   initButtons();
+
+  // 👇 инициализация zoom/pan
+  initZoomAndPan("image-container");
 
   // Первоначальное обновление UI
   updateUI();
