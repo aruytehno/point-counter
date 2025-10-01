@@ -1,26 +1,29 @@
 // points-manager.js
-export function initPoints(mainImage, points, saveHistory, renderPoints) {
+export function initPoints(getPoints, setPoints, saveHistory, renderPoints) {
+  const mainImage = document.getElementById("mainImage");
+
   mainImage.addEventListener("click", (e) => {
-    if (!mainImage.src) return;
+    if (!mainImage.src || !mainImage.complete) return;
 
     const rect = mainImage.getBoundingClientRect();
     const relX = (e.clientX - rect.left) / rect.width;
     const relY = (e.clientY - rect.top) / rect.height;
 
-    const id = points.length + 1;
-    points.push({ id, relX, relY });
+    const currentPoints = getPoints();
+    const id = currentPoints.length + 1;
+    const newPoints = [...currentPoints, { id, relX, relY }];
 
+    setPoints(newPoints);
     saveHistory();
     renderPoints();
   });
 }
 
-export function renderPointsLayer(pointsContainer, points, mainImage, pointSize, pointOpacity, showNumbers, updateCounter) {
+export function renderPoints(pointsContainer, points, mainImage, pointSize, pointOpacity, showNumbers, updateCounter) {
   pointsContainer.innerHTML = "";
 
-  // Проверяем, загружено ли изображение
   if (!mainImage.src || !mainImage.complete) {
-    updateCounter();
+    if (updateCounter) updateCounter();
     return;
   }
 
@@ -38,11 +41,8 @@ export function renderPointsLayer(pointsContainer, points, mainImage, pointSize,
     pointEl.style.height = `${pointSize}px`;
     pointEl.style.opacity = pointOpacity;
     pointEl.textContent = showNumbers ? p.id.toString() : "";
-
     pointsContainer.appendChild(pointEl);
   });
 
-  if (updateCounter) {
-    updateCounter();
-  }
+  if (updateCounter) updateCounter();
 }

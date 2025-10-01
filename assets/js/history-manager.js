@@ -1,30 +1,35 @@
 // history-manager.js
 export function saveHistory(points, history, historyIndex, saveToLocalStorage) {
-  history = history.slice(0, historyIndex + 1);
-  history.push(JSON.stringify(points));
-  historyIndex++;
+  const newHistory = history.slice(0, historyIndex + 1);
+  newHistory.push(JSON.stringify(points));
+  const newHistoryIndex = historyIndex + 1;
   saveToLocalStorage();
-  return historyIndex;
+  return { historyIndex: newHistoryIndex, history: newHistory };
 }
 
 export function undo(points, history, historyIndex, renderPoints, saveToLocalStorage) {
   if (historyIndex > 0) {
-    historyIndex--;
-    points.length = 0;
-    points.push(...JSON.parse(history[historyIndex]));
+    const newHistoryIndex = historyIndex - 1;
+    const newPoints = JSON.parse(history[newHistoryIndex]);
     renderPoints();
     saveToLocalStorage();
+    return { historyIndex: newHistoryIndex, points: newPoints };
   }
-  return historyIndex;
+  return { historyIndex, points };
 }
 
 export function redo(points, history, historyIndex, renderPoints, saveToLocalStorage) {
   if (historyIndex < history.length - 1) {
-    historyIndex++;
-    points.length = 0;
-    points.push(...JSON.parse(history[historyIndex]));
+    const newHistoryIndex = historyIndex + 1;
+    const newPoints = JSON.parse(history[newHistoryIndex]);
     renderPoints();
     saveToLocalStorage();
+    return { historyIndex: newHistoryIndex, points: newPoints };
   }
-  return historyIndex;
+  return { historyIndex, points };
+}
+
+export function initHistory(undoBtn, redoBtn, getPoints, getHistory, getHistoryIndex, setPoints, setHistoryIndex, renderPoints, saveToLocalStorage) {
+  // Обработчики уже установлены в app.js, эта функция может быть использована для дополнительной инициализации
+  // или может быть удалена если не нужна
 }

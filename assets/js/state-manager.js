@@ -25,8 +25,10 @@ export function loadFromLocalStorage(mainImage, points, toggleNumbers, pointSize
 
   if (savedImage) mainImage.src = savedImage;
   if (savedPoints) {
+    // Очищаем массив и добавляем сохраненные точки
     points.length = 0;
-    points.push(...JSON.parse(savedPoints));
+    const parsedPoints = JSON.parse(savedPoints);
+    points.push(...parsedPoints);
   }
   if (savedShowNumbers !== null) {
     showNumbers = savedShowNumbers === "true";

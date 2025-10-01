@@ -1,38 +1,38 @@
 // ui-controller.js
-export function initUIControls(toggleNumbers, pointSizeInput, pointOpacityInput, renderPoints, saveSettings) {
-  let showNumbers = toggleNumbers.checked;
-  let pointSize = parseInt(pointSizeInput.value);
-  let pointOpacity = parseInt(pointOpacityInput.value) / 100;
+export function initUIControls(
+  getShowNumbers,
+  getPointSize,
+  getPointOpacity,
+  setShowNumbers,
+  setPointSize,
+  setPointOpacity,
+  renderPoints,
+  saveSettings
+) {
+  const toggleNumbers = document.getElementById("toggleNumbers");
+  const pointSizeInput = document.getElementById("pointSize");
+  const pointOpacityInput = document.getElementById("pointOpacity");
+
+  // Установка начальных значений
+  toggleNumbers.checked = getShowNumbers();
+  pointSizeInput.value = getPointSize();
+  pointOpacityInput.value = Math.round(getPointOpacity() * 100);
 
   toggleNumbers.addEventListener("change", () => {
-    showNumbers = toggleNumbers.checked;
-    if (saveSettings) {
-      saveSettings(showNumbers, pointSize, pointOpacity);
-    }
-    if (renderPoints) {
-      renderPoints();
-    }
+    setShowNumbers(toggleNumbers.checked);
+    saveSettings();
+    renderPoints();
   });
 
   pointSizeInput.addEventListener("input", () => {
-    pointSize = parseInt(pointSizeInput.value);
-    if (saveSettings) {
-      saveSettings(showNumbers, pointSize, pointOpacity);
-    }
-    if (renderPoints) {
-      renderPoints();
-    }
+    setPointSize(parseInt(pointSizeInput.value));
+    saveSettings();
+    renderPoints();
   });
 
   pointOpacityInput.addEventListener("input", () => {
-    pointOpacity = parseInt(pointOpacityInput.value) / 100;
-    if (saveSettings) {
-      saveSettings(showNumbers, pointSize, pointOpacity);
-    }
-    if (renderPoints) {
-      renderPoints();
-    }
+    setPointOpacity(parseInt(pointOpacityInput.value) / 100);
+    saveSettings();
+    renderPoints();
   });
-
-  return { showNumbers, pointSize, pointOpacity };
 }

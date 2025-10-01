@@ -1,5 +1,8 @@
 // image-handler.js
-export function initImageUpload(upload, mainImage, points, history, historyIndex, renderPoints, saveToLocalStorage) {
+export function initImageUpload(getPoints, getHistory, getHistoryIndex, setPoints, setHistory, setHistoryIndex, renderPoints, saveToLocalStorage) {
+  const upload = document.getElementById("upload");
+  const mainImage = document.getElementById("mainImage");
+
   upload.addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -7,9 +10,12 @@ export function initImageUpload(upload, mainImage, points, history, historyIndex
     const reader = new FileReader();
     reader.onload = function (event) {
       mainImage.src = event.target.result;
-      points.length = 0;
-      history.length = 0;
-      historyIndex = -1;
+
+      // Очищаем данные через сеттеры
+      setPoints([]);
+      setHistory([]);
+      setHistoryIndex(-1);
+
       renderPoints();
       saveToLocalStorage();
     };
