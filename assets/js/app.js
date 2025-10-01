@@ -13,9 +13,12 @@ const pointsLayer = document.getElementById('points-layer');
 const counterElement = document.getElementById('counter');
 const saveButton = document.getElementById('save-btn');
 const resetButton = document.getElementById('reset-btn');
+const welcomeMessage = document.getElementById('welcome-message');
+const welcomeLoadButton = document.getElementById('welcome-load-btn');
 
 // 1. Загрузка изображения
 loadButton.addEventListener('click', () => fileInput.click());
+welcomeLoadButton.addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', handleImageUpload);
 
 function handleImageUpload(e) {
@@ -26,6 +29,8 @@ function handleImageUpload(e) {
     state.imageUrl = event.target.result;
     state.points = [];
     mainImage.src = state.imageUrl;
+    mainImage.classList.add('loaded'); // Добавляем класс для отображения
+    welcomeMessage.classList.add('hidden'); // Скрываем welcome-сообщение
     saveState(); // Сохраняем в localStorage
     renderPoints(); // Очищаем точки
     updateCounter();
@@ -92,12 +97,16 @@ function loadState() {
   const saved = localStorage.getItem('pointCounterState');
   if (saved) {
     state = JSON.parse(saved);
-    mainImage.src = state.imageUrl;
-    // Ждем, пока изображение загрузится, прежде чем рисовать точки
-    mainImage.onload = () => {
-      renderPoints();
-      updateCounter();
-    };
+    if (state.imageUrl) {
+      mainImage.src = state.imageUrl;
+      mainImage.classList.add('loaded');
+      welcomeMessage.classList.add('hidden');
+      // Ждем, пока изображение загрузится, прежде чем рисовать точки
+      mainImage.onload = () => {
+        renderPoints();
+        updateCounter();
+      };
+    }
   }
 }
 
@@ -106,6 +115,8 @@ resetButton.addEventListener('click', () => {
   if (confirm('Удалить изображение и все точки?')) {
     state = { imageUrl: null, points: [] };
     mainImage.src = '';
+    mainImage.classList.remove('loaded');
+    welcomeMessage.classList.remove('hidden');
     saveState();
     renderPoints();
     updateCounter();
@@ -113,7 +124,6 @@ resetButton.addEventListener('click', () => {
 });
 
 // 5. Сохранение результата (используем html2canvas для простоты)
-// Нужно будет подключить библиотеку: <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 saveButton.addEventListener('click', () => {
   if (!state.imageUrl) {
     alert('Сначала загрузите изображение!');
