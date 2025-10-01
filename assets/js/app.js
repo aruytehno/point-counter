@@ -97,14 +97,16 @@ saveBtn.addEventListener("click", () => {
   canvas.height = mainImage.naturalHeight;
   const ctx = canvas.getContext("2d");
 
+  // Рисуем картинку
   ctx.drawImage(mainImage, 0, 0);
 
+  // Настройки текста для точек
   ctx.font = "20px sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
+  // Рисуем точки
   points.forEach((p) => {
-    // пересчёт в координаты оригинального изображения
     const x = p.relX * mainImage.naturalWidth;
     const y = p.relY * mainImage.naturalHeight;
 
@@ -116,8 +118,26 @@ saveBtn.addEventListener("click", () => {
     ctx.fillText(p.id, x, y);
   });
 
+  // === Итоговое количество точек в правом верхнем углу ===
+  const total = points.length;
+  if (total > 0) {
+    ctx.font = "bold 48px sans-serif";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "top";
+
+    // обводка для читаемости
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 6;
+    ctx.strokeText(`Итого: ${total}`, canvas.width - 20, 20);
+
+    ctx.fillStyle = "white";
+    ctx.fillText(`Итого: ${total}`, canvas.width - 20, 20);
+  }
+
+  // === Скачивание с числом в названии ===
   const link = document.createElement("a");
-  link.download = "result.png";
+  link.download = `result_${total}.png`;
   link.href = canvas.toDataURL("image/png");
   link.click();
 });
+
