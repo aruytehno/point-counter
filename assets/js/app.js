@@ -6,10 +6,19 @@ const saveBtn = document.getElementById("saveBtn");
 const undoBtn = document.getElementById("undoBtn");
 const redoBtn = document.getElementById("redoBtn");
 const resetBtn = document.getElementById("resetBtn");
+const toggleNumbers = document.getElementById("toggleNumbers");
+let showNumbers = true;
 
 let points = [];
 let history = [];
 let historyIndex = -1;
+
+
+
+toggleNumbers.addEventListener("change", () => {
+  showNumbers = toggleNumbers.checked;
+  renderPoints();
+});
 
 // === Утилиты ===
 function updateCounter() {
@@ -29,7 +38,7 @@ function renderPoints() {
 
     pointEl.style.left = `${x}px`;
     pointEl.style.top = `${y}px`;
-    pointEl.textContent = p.id;
+    pointEl.textContent = showNumbers ? p.id : ""; // показываем или скрываем цифру
     pointsContainer.appendChild(pointEl);
   });
   updateCounter();
