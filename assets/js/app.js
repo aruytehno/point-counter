@@ -17,11 +17,17 @@ function updateCounter() {
 
 function renderPoints() {
   pointsContainer.innerHTML = "";
+  const rect = mainImage.getBoundingClientRect();
   points.forEach((p) => {
     const pointEl = document.createElement("div");
     pointEl.className = "point";
-    pointEl.style.left = `${p.x}px`;
-    pointEl.style.top = `${p.y}px`;
+
+    // преобразуем относительные координаты в экранные
+    const x = p.relX * rect.width;
+    const y = p.relY * rect.height;
+
+    pointEl.style.left = `${x}px`;
+    pointEl.style.top = `${y}px`;
     pointEl.textContent = p.id;
     pointsContainer.appendChild(pointEl);
   });
@@ -55,11 +61,11 @@ mainImage.addEventListener("click", (e) => {
   if (!mainImage.src) return;
 
   const rect = mainImage.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
+  const relX = (e.clientX - rect.left) / rect.width;
+  const relY = (e.clientY - rect.top) / rect.height;
 
   const id = points.length + 1;
-  points.push({ id, x, y });
+  points.push({ id, relX, relY });
 
   saveHistory();
   renderPoints();
@@ -98,12 +104,16 @@ saveBtn.addEventListener("click", () => {
   ctx.textBaseline = "middle";
 
   points.forEach((p) => {
+    // пересчёт в координаты оригинального изображения
+    const x = p.relX * mainImage.naturalWidth;
+    const y = p.relY * mainImage.naturalHeight;
+
     ctx.beginPath();
-    ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+    ctx.arc(x, y, 10, 0, Math.PI * 2);
     ctx.fillStyle = "red";
     ctx.fill();
     ctx.fillStyle = "white";
-    ctx.fillText(p.id, p.x, p.y);
+    ctx.fillText(p.id, x, y);
   });
 
   const link = document.createElement("a");
