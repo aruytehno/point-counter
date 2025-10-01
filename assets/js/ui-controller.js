@@ -6,20 +6,32 @@ export function initUIControls(toggleNumbers, pointSizeInput, pointOpacityInput,
 
   toggleNumbers.addEventListener("change", () => {
     showNumbers = toggleNumbers.checked;
-    saveSettings(showNumbers, pointSize, pointOpacity);
-    renderPoints();
+    if (saveSettings) {
+      saveSettings(showNumbers, pointSize, pointOpacity);
+    }
+    if (renderPoints) {
+      renderPoints();
+    }
   });
 
   pointSizeInput.addEventListener("input", () => {
     pointSize = parseInt(pointSizeInput.value);
-    saveSettings(showNumbers, pointSize, pointOpacity);
-    renderPoints();
+    if (saveSettings) {
+      saveSettings(showNumbers, pointSize, pointOpacity);
+    }
+    if (renderPoints) {
+      renderPoints();
+    }
   });
 
   pointOpacityInput.addEventListener("input", () => {
     pointOpacity = parseInt(pointOpacityInput.value) / 100;
-    saveSettings(showNumbers, pointSize, pointOpacity);
-    renderPoints();
+    if (saveSettings) {
+      saveSettings(showNumbers, pointSize, pointOpacity);
+    }
+    if (renderPoints) {
+      renderPoints();
+    }
   });
 
   return { showNumbers, pointSize, pointOpacity };

@@ -17,6 +17,13 @@ export function initPoints(mainImage, points, saveHistory, renderPoints) {
 
 export function renderPointsLayer(pointsContainer, points, mainImage, pointSize, pointOpacity, showNumbers, updateCounter) {
   pointsContainer.innerHTML = "";
+
+  // Проверяем, загружено ли изображение
+  if (!mainImage.src || !mainImage.complete) {
+    updateCounter();
+    return;
+  }
+
   const rect = mainImage.getBoundingClientRect();
   points.forEach((p) => {
     const pointEl = document.createElement("div");
@@ -30,8 +37,12 @@ export function renderPointsLayer(pointsContainer, points, mainImage, pointSize,
     pointEl.style.width = `${pointSize}px`;
     pointEl.style.height = `${pointSize}px`;
     pointEl.style.opacity = pointOpacity;
-    pointEl.textContent = showNumbers ? p.id : "";
+    pointEl.textContent = showNumbers ? p.id.toString() : "";
+
     pointsContainer.appendChild(pointEl);
   });
-  updateCounter();
+
+  if (updateCounter) {
+    updateCounter();
+  }
 }

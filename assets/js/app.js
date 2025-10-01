@@ -47,14 +47,19 @@ let { showNumbers, pointSize, pointOpacity } = initUIControls(
 );
 
 // Load from localStorage
-({ showNumbers, pointSize, pointOpacity } = loadFromLocalStorage(
+const loadedSettings = loadFromLocalStorage(
   mainImage,
   points,
   toggleNumbers,
   pointSizeInput,
   pointOpacityInput,
   renderPoints
-));
+);
+
+// Обновляем переменные из загруженных настроек
+showNumbers = loadedSettings.showNumbers;
+pointSize = loadedSettings.pointSize;
+pointOpacity = loadedSettings.pointOpacity;
 
 // Init image upload
 initImageUpload(
@@ -73,6 +78,7 @@ initPoints(
   points,
   () => {
     historyIndex = saveHistory(points, history, historyIndex, saveToLocalStorageWrapper);
+    updateCounter();
   },
   renderPoints
 );
@@ -117,7 +123,7 @@ resetBtn.addEventListener("click", () => {
 
 // Save PNG
 saveBtn.addEventListener("click", () => {
-  if (!mainImage.src) return;
+  if (!mainImage.src || !mainImage.complete) return;
 
   const canvas = document.createElement("canvas");
   canvas.width = mainImage.naturalWidth;
@@ -163,3 +169,6 @@ saveBtn.addEventListener("click", () => {
   link.href = canvas.toDataURL("image/png");
   link.click();
 });
+
+// Initial render
+renderPoints();

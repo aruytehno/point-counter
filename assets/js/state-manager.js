@@ -1,6 +1,6 @@
 // state-manager.js
 export function saveToLocalStorage(mainImage, points) {
-  if (mainImage.src.startsWith("data:image")) {
+  if (mainImage.src && mainImage.src.startsWith("data:image")) {
     localStorage.setItem("imageSrc", mainImage.src);
   }
   localStorage.setItem("points", JSON.stringify(points));
@@ -24,7 +24,10 @@ export function loadFromLocalStorage(mainImage, points, toggleNumbers, pointSize
   let pointOpacity = 1;
 
   if (savedImage) mainImage.src = savedImage;
-  if (savedPoints) points.push(...JSON.parse(savedPoints));
+  if (savedPoints) {
+    points.length = 0;
+    points.push(...JSON.parse(savedPoints));
+  }
   if (savedShowNumbers !== null) {
     showNumbers = savedShowNumbers === "true";
     toggleNumbers.checked = showNumbers;
@@ -38,6 +41,9 @@ export function loadFromLocalStorage(mainImage, points, toggleNumbers, pointSize
     pointOpacityInput.value = Math.round(pointOpacity * 100);
   }
 
-  renderPoints();
+  if (renderPoints) {
+    renderPoints();
+  }
+
   return { showNumbers, pointSize, pointOpacity };
 }
