@@ -25,40 +25,76 @@ function updateCounter() {
   counter.textContent = `Точек: ${points.length}`;
 }
 
+function renderPoints() {
+  renderPointsLayer(pointsContainer, points, mainImage, pointSize, pointOpacity, showNumbers, updateCounter);
+}
+
+function saveToLocalStorageWrapper() {
+  saveToLocalStorage(mainImage, points);
+}
+
+function saveSettingsWrapper() {
+  saveSettings(showNumbers, pointSize, pointOpacity);
+}
+
 // UI controls
-let { showNumbers, pointSize, pointOpacity } = initUIControls(toggleNumbers, pointSizeInput, pointOpacityInput,
-  () => renderPointsLayer(pointsContainer, points, mainImage, pointSize, pointOpacity, showNumbers, updateCounter),
-  saveSettings
+let { showNumbers, pointSize, pointOpacity } = initUIControls(
+  toggleNumbers,
+  pointSizeInput,
+  pointOpacityInput,
+  renderPoints,
+  saveSettingsWrapper
 );
 
 // Load from localStorage
-({ showNumbers, pointSize, pointOpacity } = loadFromLocalStorage(mainImage, points, toggleNumbers, pointSizeInput, pointOpacityInput,
-  () => renderPointsLayer(pointsContainer, points, mainImage, pointSize, pointOpacity, showNumbers, updateCounter)
+({ showNumbers, pointSize, pointOpacity } = loadFromLocalStorage(
+  mainImage,
+  points,
+  toggleNumbers,
+  pointSizeInput,
+  pointOpacityInput,
+  renderPoints
 ));
 
 // Init image upload
-initImageUpload(upload, mainImage, points, history, historyIndex,
-  () => renderPointsLayer(pointsContainer, points, mainImage, pointSize, pointOpacity, showNumbers, updateCounter),
-  saveToLocalStorage
+initImageUpload(
+  upload,
+  mainImage,
+  points,
+  history,
+  historyIndex,
+  renderPoints,
+  saveToLocalStorageWrapper
 );
 
 // Init points
-initPoints(mainImage, points, () => {
-  historyIndex = saveHistory(points, history, historyIndex, saveToLocalStorage);
-}, () => renderPointsLayer(pointsContainer, points, mainImage, pointSize, pointOpacity, showNumbers, updateCounter));
+initPoints(
+  mainImage,
+  points,
+  () => {
+    historyIndex = saveHistory(points, history, historyIndex, saveToLocalStorageWrapper);
+  },
+  renderPoints
+);
 
 // Undo/Redo
 undoBtn.addEventListener("click", () => {
-  historyIndex = undo(points, history, historyIndex,
-    () => renderPointsLayer(pointsContainer, points, mainImage, pointSize, pointOpacity, showNumbers, updateCounter),
-    saveToLocalStorage
+  historyIndex = undo(
+    points,
+    history,
+    historyIndex,
+    renderPoints,
+    saveToLocalStorageWrapper
   );
 });
 
 redoBtn.addEventListener("click", () => {
-  historyIndex = redo(points, history, historyIndex,
-    () => renderPointsLayer(pointsContainer, points, mainImage, pointSize, pointOpacity, showNumbers, updateCounter),
-    saveToLocalStorage
+  historyIndex = redo(
+    points,
+    history,
+    historyIndex,
+    renderPoints,
+    saveToLocalStorageWrapper
   );
 });
 
