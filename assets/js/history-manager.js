@@ -30,6 +30,14 @@ export function redo(points, history, historyIndex, renderPoints, saveToLocalSto
 }
 
 export function initHistory(undoBtn, redoBtn, getPoints, getHistory, getHistoryIndex, setPoints, setHistoryIndex, renderPoints, saveToLocalStorage) {
-  // Обработчики уже установлены в app.js, эта функция может быть использована для дополнительной инициализации
-  // или может быть удалена если не нужна
+  // Функция для обновления состояния кнопок
+  const updateButtons = () => {
+    const historyIndex = getHistoryIndex();
+    const history = getHistory();
+    undoBtn.disabled = historyIndex <= 0;
+    redoBtn.disabled = historyIndex >= history.length - 1;
+  };
+
+  // Обновляем кнопки при изменении истории
+  updateButtons();
 }

@@ -5,7 +5,17 @@ import { initHistory, undo, redo, saveHistory } from "./history-manager.js";
 import { saveToLocalStorage, saveSettings, loadFromLocalStorage } from "./state-manager.js";
 import { initUIControls } from "./ui-controller.js";
 
-// Глобальные переменные (как в оригинальном коде)
+// Глобальные переменные состояния
+let state = {
+  points: [],
+  history: [],
+  historyIndex: -1,
+  showNumbers: true,
+  pointSize: 20,
+  pointOpacity: 1
+};
+
+// Получение элементов DOM
 const upload = document.getElementById("upload");
 const mainImage = document.getElementById("mainImage");
 const pointsContainer = document.getElementById("points");
@@ -18,82 +28,96 @@ const toggleNumbers = document.getElementById("toggleNumbers");
 const pointSizeInput = document.getElementById("pointSize");
 const pointOpacityInput = document.getElementById("pointOpacity");
 
-let showNumbers = toggleNumbers.checked;
-let pointSize = parseInt(pointSizeInput.value);
-let pointOpacity = parseInt(pointOpacityInput.value) / 100;
-let points = [];
-let history = [];
-let historyIndex = -1;
+// Функции для работы с состоянием
+function updateState(newState) {
+  state = { ...state, ...newState };
+  updateUI();
+}
 
-// Функции, которые используются в модулях
+function updateUI() {
+  updateCounter();
+  renderPoints(
+    pointsContainer,
+    state.points,
+    mainImage,
+    state.pointSize,
+    state.pointOpacity,
+    state.showNumbers,
+    updateCounter
+  );
+  updateHistoryButtons();
+}
+
 function updateCounter() {
-  counter.textContent = `Точек: ${points.length}`;
+  counter.textContent = `Точек: ${state.points.length}`;
+}
+
+function updateHistoryButtons() {
+  undoBtn.disabled = state.historyIndex <= 0;
+  redoBtn.disabled = state.historyIndex >= state.history.length - 1;
 }
 
 // Обертки для функций
-function renderPointsApp() {
-  renderPoints(pointsContainer, points, mainImage, pointSize, pointOpacity, showNumbers, updateCounter);
-}
-
 function saveToLocalStorageApp() {
-  saveToLocalStorage(mainImage, points);
+  saveToLocalStorage(mainImage, state.points);
 }
 
 function saveSettingsApp() {
-  saveSettings(showNumbers, pointSize, pointOpacity);
+  saveSettings(state.showNumbers, state.pointSize, state.pointOpacity);
 }
 
 function saveHistoryApp() {
-  const result = saveHistory(points, history, historyIndex, saveToLocalStorageApp);
-  historyIndex = result.historyIndex;
-  history = result.history;
+  const result = saveHistory(state.points, state.history, state.historyIndex, saveToLocalStorageApp);
+  updateState({ history: result.history, historyIndex: result.historyIndex });
 }
 
 function loadFromLocalStorageApp() {
   const saved = loadFromLocalStorage(
     mainImage,
-    points,
+    state.points,
     toggleNumbers,
     pointSizeInput,
     pointOpacityInput,
-    renderPointsApp
+    () => updateUI()
   );
 
   if (saved) {
-    showNumbers = saved.showNumbers;
-    pointSize = saved.pointSize;
-    pointOpacity = saved.pointOpacity;
+    updateState({
+      showNumbers: saved.showNumbers,
+      pointSize: saved.pointSize,
+      pointOpacity: saved.pointOpacity
+    });
   }
 }
 
 // Инициализация кнопок
 function initButtons() {
   undoBtn.addEventListener("click", () => {
-    const result = undo(points, history, historyIndex, renderPointsApp, saveToLocalStorageApp);
-    historyIndex = result.historyIndex;
-    points = result.points;
+    const result = undo(state.points, state.history, state.historyIndex, () => updateUI(), saveToLocalStorageApp);
+    updateState({ points: result.points, historyIndex: result.historyIndex });
   });
 
   redoBtn.addEventListener("click", () => {
-    const result = redo(points, history, historyIndex, renderPointsApp, saveToLocalStorageApp);
-    historyIndex = result.historyIndex;
-    points = result.points;
+    const result = redo(state.points, state.history, state.historyIndex, () => updateUI(), saveToLocalStorageApp);
+    updateState({ points: result.points, historyIndex: result.historyIndex });
   });
 
   resetBtn.addEventListener("click", () => {
     localStorage.clear();
-    points = [];
-    history = [];
-    historyIndex = -1;
+    updateState({
+      points: [],
+      history: [],
+      historyIndex: -1,
+      showNumbers: true,
+      pointSize: 20,
+      pointOpacity: 1
+    });
     mainImage.src = "";
     pointsContainer.innerHTML = "";
-    showNumbers = true;
     toggleNumbers.checked = true;
-    pointSize = 20;
-    pointOpacity = 1;
-    pointSizeInput.value = pointSize;
+    pointSizeInput.value = 20;
     pointOpacityInput.value = 100;
-    updateCounter();
+    updateUI();
   });
 
   saveBtn.addEventListener("click", () => {
@@ -106,18 +130,18 @@ function initButtons() {
 
     ctx.drawImage(mainImage, 0, 0);
 
-    points.forEach((p) => {
+    state.points.forEach((p) => {
       const x = p.relX * mainImage.naturalWidth;
       const y = p.relY * mainImage.naturalHeight;
       const scale = mainImage.naturalWidth / mainImage.width;
-      const radius = (pointSize / 2) * scale;
+      const radius = (state.pointSize / 2) * scale;
 
       ctx.beginPath();
       ctx.arc(x, y, radius, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,0,0,${pointOpacity})`;
+      ctx.fillStyle = `rgba(255,0,0,${state.pointOpacity})`;
       ctx.fill();
 
-      if (showNumbers) {
+      if (state.showNumbers) {
         ctx.fillStyle = "white";
         ctx.font = `${radius}px sans-serif`;
         ctx.textAlign = "center";
@@ -126,7 +150,7 @@ function initButtons() {
       }
     });
 
-    const total = points.length;
+    const total = state.points.length;
     if (total > 0) {
       ctx.font = "bold 48px sans-serif";
       ctx.textAlign = "right";
@@ -152,51 +176,54 @@ function initApp() {
 
   // Инициализация UI контролов
   initUIControls(
-    () => showNumbers,
-    () => pointSize,
-    () => pointOpacity,
-    (newShowNumbers) => { showNumbers = newShowNumbers; },
-    (newPointSize) => { pointSize = newPointSize; },
-    (newPointOpacity) => { pointOpacity = newPointOpacity; },
-    renderPointsApp,
+    () => state.showNumbers,
+    () => state.pointSize,
+    () => state.pointOpacity,
+    (newShowNumbers) => updateState({ showNumbers: newShowNumbers }),
+    (newPointSize) => updateState({ pointSize: newPointSize }),
+    (newPointOpacity) => updateState({ pointOpacity: newPointOpacity }),
+    () => updateUI(),
     saveSettingsApp
   );
 
   // Инициализация загрузки изображений
   initImageUpload(
-    () => points,
-    () => history,
-    () => historyIndex,
-    (newPoints) => { points = newPoints; },
-    (newHistory) => { history = newHistory; },
-    (newHistoryIndex) => { historyIndex = newHistoryIndex; },
-    renderPointsApp,
+    () => state.points,
+    () => state.history,
+    () => state.historyIndex,
+    (newPoints) => updateState({ points: newPoints }),
+    (newHistory) => updateState({ history: newHistory }),
+    (newHistoryIndex) => updateState({ historyIndex: newHistoryIndex }),
+    () => updateUI(),
     saveToLocalStorageApp
   );
 
   // Инициализация точек
   initPoints(
-    () => points,
-    (newPoints) => { points = newPoints; },
+    () => state.points,
+    (newPoints) => updateState({ points: newPoints }),
     saveHistoryApp,
-    renderPointsApp
+    () => updateUI()
   );
 
   // Инициализация истории
   initHistory(
     undoBtn,
     redoBtn,
-    () => points,
-    () => history,
-    () => historyIndex,
-    (newPoints) => { points = newPoints; },
-    (newHistoryIndex) => { historyIndex = newHistoryIndex; },
-    renderPointsApp,
+    () => state.points,
+    () => state.history,
+    () => state.historyIndex,
+    (newPoints) => updateState({ points: newPoints }),
+    (newHistoryIndex) => updateState({ historyIndex: newHistoryIndex }),
+    () => updateUI(),
     saveToLocalStorageApp
   );
 
   // Назначение обработчиков кнопок
   initButtons();
+
+  // Первоначальное обновление UI
+  updateUI();
 }
 
 // Запуск приложения

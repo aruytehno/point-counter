@@ -4,6 +4,18 @@ export function saveToLocalStorage(mainImage, points) {
     localStorage.setItem("imageSrc", mainImage.src);
   }
   localStorage.setItem("points", JSON.stringify(points));
+
+  // Сохраняем историю для синхронизации
+  const history = JSON.parse(localStorage.getItem("history") || "[]");
+  const historyIndex = parseInt(localStorage.getItem("historyIndex") || "-1");
+
+  // Обновляем историю текущим состоянием
+  const newHistory = history.slice(0, historyIndex + 1);
+  newHistory.push(JSON.stringify(points));
+  const newHistoryIndex = historyIndex + 1;
+
+  localStorage.setItem("history", JSON.stringify(newHistory));
+  localStorage.setItem("historyIndex", newHistoryIndex.toString());
 }
 
 export function saveSettings(showNumbers, pointSize, pointOpacity) {
@@ -18,6 +30,8 @@ export function loadFromLocalStorage(mainImage, points, toggleNumbers, pointSize
   const savedShowNumbers = localStorage.getItem("showNumbers");
   const savedPointSize = localStorage.getItem("pointSize");
   const savedPointOpacity = localStorage.getItem("pointOpacity");
+  const savedHistory = localStorage.getItem("history");
+  const savedHistoryIndex = localStorage.getItem("historyIndex");
 
   let showNumbers = true;
   let pointSize = 20;
@@ -43,9 +57,20 @@ export function loadFromLocalStorage(mainImage, points, toggleNumbers, pointSize
     pointOpacityInput.value = Math.round(pointOpacity * 100);
   }
 
+  // Загружаем историю
+  if (savedHistory && savedHistoryIndex !== null) {
+    // История будет обработана в основном приложении
+  }
+
   if (renderPoints) {
     renderPoints();
   }
 
-  return { showNumbers, pointSize, pointOpacity };
+  return {
+    showNumbers,
+    pointSize,
+    pointOpacity,
+    history: savedHistory ? JSON.parse(savedHistory) : [],
+    historyIndex: savedHistoryIndex ? parseInt(savedHistoryIndex) : -1
+  };
 }
