@@ -12,11 +12,17 @@ export function initUIControls(
   const toggleNumbers = document.getElementById("toggleNumbers");
   const pointSizeInput = document.getElementById("pointSize");
   const pointOpacityInput = document.getElementById("pointOpacity");
+  const pointSizeValue = document.getElementById("pointSizeValue");
+  const pointOpacityValue = document.getElementById("pointOpacityValue");
 
   // Установка начальных значений
   toggleNumbers.checked = getShowNumbers();
   pointSizeInput.value = getPointSize();
   pointOpacityInput.value = Math.round(getPointOpacity() * 100);
+
+  // Установка начальных значений для отображения
+  pointSizeValue.textContent = getPointSize();
+  pointOpacityValue.textContent = Math.round(getPointOpacity() * 100);
 
   toggleNumbers.addEventListener("change", () => {
     setShowNumbers(toggleNumbers.checked);
@@ -25,13 +31,17 @@ export function initUIControls(
   });
 
   pointSizeInput.addEventListener("input", () => {
-    setPointSize(parseInt(pointSizeInput.value));
+    const value = parseInt(pointSizeInput.value);
+    setPointSize(value);
+    pointSizeValue.textContent = value;
     saveSettings();
     renderPoints();
   });
 
   pointOpacityInput.addEventListener("input", () => {
-    setPointOpacity(parseInt(pointOpacityInput.value) / 100);
+    const value = parseInt(pointOpacityInput.value);
+    setPointOpacity(value / 100);
+    pointOpacityValue.textContent = value;
     saveSettings();
     renderPoints();
   });

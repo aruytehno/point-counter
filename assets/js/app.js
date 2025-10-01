@@ -50,7 +50,7 @@ function updateUI() {
 }
 
 function updateCounter() {
-  counter.textContent = `Точек: ${state.points.length}`;
+  counter.textContent = state.points.length;
 }
 
 function updateHistoryButtons() {
@@ -86,7 +86,9 @@ function loadFromLocalStorageApp() {
     updateState({
       showNumbers: saved.showNumbers,
       pointSize: saved.pointSize,
-      pointOpacity: saved.pointOpacity
+      pointOpacity: saved.pointOpacity,
+      history: saved.history || [],
+      historyIndex: saved.historyIndex || -1
     });
   }
 }
@@ -118,6 +120,13 @@ function initButtons() {
     toggleNumbers.checked = true;
     pointSizeInput.value = 20;
     pointOpacityInput.value = 100;
+
+    // Обновляем отображаемые значения
+    const pointSizeValue = document.getElementById("pointSizeValue");
+    const pointOpacityValue = document.getElementById("pointOpacityValue");
+    if (pointSizeValue) pointSizeValue.textContent = "20";
+    if (pointOpacityValue) pointOpacityValue.textContent = "100";
+
     updateUI();
   });
 
@@ -167,6 +176,47 @@ function initButtons() {
     link.download = `result_${total}.png`;
     link.href = canvas.toDataURL("image/png");
     link.click();
+  });
+}
+
+// Управление боковой панелью
+function initSidebar() {
+  const sidebar = document.querySelector('.sidebar');
+  const sidebarToggle = document.querySelector('.sidebar-toggle');
+  const mainContent = document.querySelector('.main-content');
+
+  if (!sidebar || !sidebarToggle || !mainContent) {
+    console.warn('Sidebar elements not found');
+    return;
+  }
+
+  sidebarToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed');
+    mainContent.classList.toggle('expanded');
+
+    // Обновляем иконку кнопки
+    const icon = sidebarToggle.querySelector('i');
+    if (sidebar.classList.contains('collapsed')) {
+      icon.classList.remove('bi-list');
+      icon.classList.add('bi-layout-sidebar');
+    } else {
+      icon.classList.remove('bi-layout-sidebar');
+      icon.classList.add('bi-list');
+    }
+  });
+
+  // Закрытие боковой панели при клике вне ее на мобильных устройствах
+  document.addEventListener('click', (e) => {
+    if (window.innerWidth <= 768 &&
+        !sidebar.contains(e.target) &&
+        !sidebarToggle.contains(e.target) &&
+        !sidebar.classList.contains('collapsed')) {
+      sidebar.classList.add('collapsed');
+      mainContent.classList.add('expanded');
+      const icon = sidebarToggle.querySelector('i');
+      icon.classList.remove('bi-list');
+      icon.classList.add('bi-layout-sidebar');
+    }
   });
 }
 
@@ -225,6 +275,9 @@ function initApp() {
 
   // 👇 инициализация zoom/pan
   initZoomAndPan("image-container");
+
+  // 👇 инициализация боковой панели
+  initSidebar();
 
   // Первоначальное обновление UI
   updateUI();
