@@ -1,156 +1,80 @@
-// Состояние приложения
-let state = {
-  imageUrl: null, // Data URL загруженного изображения
-  points: []      // Массив точек: { id, x, y } (координаты в долях от 0 до 1)
-};
+const upload = document.getElementById("upload");
+const mainImage = document.getElementById("mainImage");
+const pointsContainer = document.getElementById("points");
+const counter = document.getElementById("counter");
+const saveBtn = document.getElementById("saveBtn");
 
-// Элементы DOM
-const fileInput = document.getElementById('file-input');
-const loadButton = document.getElementById('load-btn');
-const imageContainer = document.getElementById('image-container');
-const mainImage = document.getElementById('main-image');
-const pointsLayer = document.getElementById('points-layer');
-const counterElement = document.getElementById('counter');
-const saveButton = document.getElementById('save-btn');
-const resetButton = document.getElementById('reset-btn');
-const welcomeMessage = document.getElementById('welcome-message');
-const welcomeLoadButton = document.getElementById('welcome-load-btn');
+let points = [];
 
-// 1. Загрузка изображения
-loadButton.addEventListener('click', () => fileInput.click());
-welcomeLoadButton.addEventListener('click', () => fileInput.click());
-fileInput.addEventListener('change', handleImageUpload);
-
-function handleImageUpload(e) {
+// === 1. Загрузка изображения ===
+upload.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
+
   const reader = new FileReader();
-  reader.onload = (event) => {
-    state.imageUrl = event.target.result;
-    state.points = [];
-    mainImage.src = state.imageUrl;
-    mainImage.classList.add('loaded'); // Добавляем класс для отображения
-    welcomeMessage.classList.add('hidden'); // Скрываем welcome-сообщение
-    saveState(); // Сохраняем в localStorage
-    renderPoints(); // Очищаем точки
+  reader.onload = function (event) {
+    mainImage.src = event.target.result;
+    points = [];
+    pointsContainer.innerHTML = "";
     updateCounter();
   };
   reader.readAsDataURL(file);
-}
+});
 
-// 2. Обработка кликов для точек
-// Вешаем обработчик на контейнер изображения, а не на слой точек
-imageContainer.addEventListener('click', handleAddPoint);
-
-function handleAddPoint(e) {
-  // Проверяем, что кликнули именно по области изображения, а не по точкам
-  if (e.target.classList.contains('point')) {
-    return; // Если кликнули по существующей точке - выходим
-  }
-
-  if (!state.imageUrl || !mainImage.classList.contains('loaded')) return;
-
-  // Получаем размеры и позицию изображения на странице
+// === 2. Установка точек ===
+mainImage.addEventListener("click", (e) => {
   const rect = mainImage.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
 
-  // Проверяем, что клик был внутри изображения
-  if (e.clientX < rect.left || e.clientX > rect.right ||
-      e.clientY < rect.top || e.clientY > rect.bottom) {
-    return;
-  }
+  const id = points.length + 1;
+  points.push({ id, x, y });
 
-  // Вычисляем координаты клика ОТНОСИТЕЛЬНО ИЗОБРАЖЕНИЯ (в долях)
-  const x = (e.clientX - rect.left) / rect.width;
-  const y = (e.clientY - rect.top) / rect.height;
+  const pointEl = document.createElement("div");
+  pointEl.className = "point";
+  pointEl.style.left = `${x}px`;
+  pointEl.style.top = `${y}px`;
+  pointEl.textContent = id;
 
-  // Создаем новую точку
-  const newPoint = {
-    id: Date.now(), // Простой уникальный ID
-    x: x,
-    y: y
-  };
-
-  state.points.push(newPoint);
-  saveState();
-  renderPoints();
+  pointsContainer.appendChild(pointEl);
   updateCounter();
-}
+});
 
-// Отрисовка всех точек
-function renderPoints() {
-  // Очищаем слой
-  pointsLayer.innerHTML = '';
-
-  state.points.forEach((point, index) => {
-    const pointElement = document.createElement('div');
-    pointElement.className = 'point';
-    pointElement.textContent = index + 1; // Нумерация с 1
-    pointElement.dataset.id = point.id; // Сохраняем ID для будущего использования
-
-    // Позиционируем точку в процентах относительно image-container
-    pointElement.style.left = `${point.x * 100}%`;
-    pointElement.style.top = `${point.y * 100}%`;
-
-    pointsLayer.appendChild(pointElement);
-  });
-}
-
-// Обновление счетчика
+// === 3. Обновление счётчика ===
 function updateCounter() {
-  counterElement.textContent = `Точек: ${state.points.length}`;
+  counter.textContent = `Точек: ${points.length}`;
 }
 
-// 3. Сохранение состояния в localStorage
-function saveState() {
-  localStorage.setItem('pointCounterState', JSON.stringify(state));
-}
+// === 4. Сохранение в PNG ===
+saveBtn.addEventListener("click", () => {
+  if (!mainImage.src) return;
 
-// Загрузка состояния из localStorage при загрузке страницы
-function loadState() {
-  const saved = localStorage.getItem('pointCounterState');
-  if (saved) {
-    state = JSON.parse(saved);
-    if (state.imageUrl) {
-      mainImage.src = state.imageUrl;
-      mainImage.classList.add('loaded');
-      welcomeMessage.classList.add('hidden');
-      // Ждем, пока изображение загрузится, прежде чем рисовать точки
-      mainImage.onload = () => {
-        renderPoints();
-        updateCounter();
-      };
-    }
-  }
-}
+  const canvas = document.createElement("canvas");
+  canvas.width = mainImage.naturalWidth;
+  canvas.height = mainImage.naturalHeight;
+  const ctx = canvas.getContext("2d");
 
-// 4. Сброс состояния
-resetButton.addEventListener('click', () => {
-  if (confirm('Удалить изображение и все точки?')) {
-    state = { imageUrl: null, points: [] };
-    mainImage.src = '';
-    mainImage.classList.remove('loaded');
-    welcomeMessage.classList.remove('hidden');
-    saveState();
-    renderPoints();
-    updateCounter();
-  }
-});
+  // Рисуем изображение
+  ctx.drawImage(mainImage, 0, 0);
 
-// 5. Сохранение результата (используем html2canvas для простоты)
-saveButton.addEventListener('click', () => {
-  if (!state.imageUrl) {
-    alert('Сначала загрузите изображение!');
-    return;
-  }
-  // "Фотографируем" контейнер с изображением и точками
-  html2canvas(imageContainer).then(canvas => {
-    // Создаем ссылку для скачивания
-    const link = document.createElement('a');
-    link.download = 'counted-image.png';
-    link.href = canvas.toDataURL();
-    link.click();
+  // Рисуем точки
+  ctx.fillStyle = "red";
+  ctx.font = "20px sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  points.forEach((p) => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "white";
+    ctx.fillText(p.id, p.x, p.y);
+    ctx.fillStyle = "red"; // вернуть обратно для следующей точки
   });
-});
 
-// Инициализация: загружаем состояние при запуске
-loadState();
+  // Скачивание
+  const link = document.createElement("a");
+  link.download = "result.png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+});
