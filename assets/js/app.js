@@ -43,8 +43,11 @@ function saveHistory() {
 }
 
 function saveToLocalStorage() {
+  // сохраняем только base64, а не blob:
+  if (mainImage.src.startsWith("data:image")) {
+    localStorage.setItem("imageSrc", mainImage.src);
+  }
   localStorage.setItem("points", JSON.stringify(points));
-  localStorage.setItem("imageSrc", mainImage.src || "");
 }
 
 function loadFromLocalStorage() {
@@ -52,13 +55,14 @@ function loadFromLocalStorage() {
   const savedPoints = localStorage.getItem("points");
 
   if (savedImage) {
-    mainImage.src = savedImage;
+    mainImage.src = savedImage; // base64 восстановится без проблем на GitHub Pages
   }
   if (savedPoints) {
     points = JSON.parse(savedPoints);
   }
   renderPoints();
 }
+
 
 // === 1. Загрузка изображения ===
 upload.addEventListener("change", (e) => {
