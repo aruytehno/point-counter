@@ -1,0 +1,194 @@
+/* assets\css\style.css */
+/* Общий сброс и базовые стили */
+:root {
+  --sidebar-width: 280px;
+  --sidebar-collapsed-width: 0px;
+  --transition-speed: 0.3s;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #212529;
+}
+
+/* Боковая панель */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: var(--sidebar-width);
+  z-index: 1000;
+  transition: transform var(--transition-speed) ease;
+  overflow-y: auto;
+}
+
+.sidebar-content {
+  height: 100%;
+}
+
+/* Кнопка переключения боковой панели */
+.sidebar-toggle {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 1001;
+  transition: left var(--transition-speed) ease;
+}
+
+/* Основной контент */
+.main-content {
+  margin-left: var(--sidebar-width);
+  transition: margin-left var(--transition-speed) ease;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Контейнер с изображением */
+#image-container {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  cursor: grab;
+  background:
+    linear-gradient(45deg, #2d3033 25%, transparent 25%),
+    linear-gradient(-45deg, #2d3033 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #2d3033 75%),
+    linear-gradient(-45deg, transparent 75%, #2d3033 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+}
+
+#image-container:active {
+  cursor: grabbing;
+}
+
+/* Враппер для трансформаций */
+#zoom-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+/* Картинка */
+#mainImage {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Слой для точек */
+#points {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Сама точка */
+.point {
+  position: absolute;
+  background: #dc3545;
+  /* border: 2px solid #fff; */ /* Убираем эту строку */
+  border-radius: 50%;
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.point:hover {
+  transform: translate(-50%, -50%) scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Состояния боковой панели */
+.sidebar.collapsed {
+  transform: translateX(-100%);
+}
+
+.sidebar.collapsed + .sidebar-toggle {
+  left: 10px;
+}
+
+.main-content.expanded {
+  margin-left: var(--sidebar-collapsed-width);
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  :root {
+    --sidebar-width: 250px;
+  }
+
+  .sidebar {
+    width: var(--sidebar-width);
+  }
+
+  .main-content {
+    margin-left: 0;
+  }
+
+  .sidebar:not(.collapsed) + .sidebar-toggle {
+    left: calc(var(--sidebar-width) + 10px);
+  }
+}
+
+/* Стилизация ползунков для темной темы */
+.form-range::-webkit-slider-thumb {
+  background-color: #0d6efd;
+}
+
+.form-range::-moz-range-thumb {
+  background-color: #0d6efd;
+}
+
+.form-range::-webkit-slider-track {
+  background-color: #495057;
+}
+
+.form-range::-moz-range-track {
+  background-color: #495057;
+}
+
+/* Кастомные стили для Bootstrap в темной теме */
+.btn-outline-secondary {
+  border-color: #6c757d;
+  color: #6c757d;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  color: #fff;
+}
+
+.form-control, .form-range {
+  background-color: #343a40;
+  border-color: #495057;
+  color: #fff;
+}
+
+.form-control:focus {
+  background-color: #343a40;
+  border-color: #0d6efd;
+  color: #fff;
+}
